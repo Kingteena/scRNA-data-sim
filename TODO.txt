@@ -1,0 +1,3 @@
+Fix the logging 
+Create a .config
+Create pipelines
