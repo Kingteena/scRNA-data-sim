@@ -27,12 +27,17 @@ def assign_cells_to_states(cnames, nstates):
     - cell_states: A list containing the State of each cell.
     """
     alpha_states = np.ones(nstates) # Symmetric dirichlet; can be adjusted
-    
-    # Generate Dirichlet distribution for probabilities across states
-    state_probabilities = np.random.dirichlet(alpha_states, size=len(cnames))
-        
-    # Assign each cell to a state based on the highest probability
-    cell_assignments = np.argmax(state_probabilities, axis=1)
+
+    # Make sure there is at least 2 distinct cell assignments
+    while True:
+        # Generate Dirichlet distribution for probabilities across states
+        state_probabilities = np.random.dirichlet(alpha_states, size=len(cnames))
+            
+        # Assign each cell to a state based on the highest probability
+        cell_assignments = np.argmax(state_probabilities, axis=1)
+
+        if len(set(cell_assignments)) >= 2:
+            break
     
     return cell_assignments
 

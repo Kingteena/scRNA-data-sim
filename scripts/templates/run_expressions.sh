@@ -6,15 +6,21 @@
 
 # TODO: CONVERT THIS SCRIPT TO PYTHON SCRIPT FOR BETTER READABILITY AND MAINTAINABILITY
 
-# Take three arguments
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <tree_input_path> <vcf_input_path> <vcf_output_path>"
+# Take three arguments with an optional fourth for xml output
+
+if [ "$#" -lt 3 ]; then
+    echo "Usage: $0 <tree_input_path> <vcf_input_path> <vcf_output_path> [xml_output_path]"
     exit 1
 fi
+
+
 
 TREE_INPUT_PATH="$1"
 VCF_INPUT_PATH="$2"
 VCF_OUTPUT_PATH="$3"
+
+
+
 
 # Parameters
 GENOME_LENGTH=500000                    # Total genome length
@@ -39,6 +45,17 @@ write_vcf(vcf_df, output_vcf='${VCF_OUTPUT_PATH}')
 
 # convert vcf to xml for beast 
 # echo "Converting vcf to xml..."
-# python3 python/vcf2xml.py data/vcf_exp/RNAvcf.0001 data/xml/cellcoal_temp.xml data/xml/cellcoal_0001.xml
+
+
+if [ "$#" -ne 4 ]; then
+    echo "No XML output path provided, skipping XML conversion."
+    exit 0
+fi
+
+WORKING_DIR=$(pwd)
+XML_OUTPUT_PATH="$4"
+XML_TEMPLATE_PATH="/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/scripts/templates/test_gt16_error.xml"
+
+python3 $WORKING_DIR/vcf2xml.py $VCF_OUTPUT_PATH $XML_TEMPLATE_PATH $XML_OUTPUT_PATH
 
 echo "VCF updates with expressions successfully!"
