@@ -114,20 +114,7 @@ def vcf2xml(vcf, xml_template, output_xml, encoding="nd16", filtering_density=0.
     if not (0 <= args.filtering_density <= 1):
         sys.exit("Error: --filtering_density must be between 0 and 1 (inclusive).")
         
-    if (filtering_density == 0):
-       
-        # Transpose sequences to iterate by columns
-        columns = zip(*sequences)
-
-        # Filter columns
-        filtered_columns = [
-            col for col in columns
-            if len(set(col) - {"-"}) > 1  # more than one non-gap character
-        ]
-
-        # Rebuild sequences (transpose back)
-        sequences = ["".join(chars) for chars in zip(*filtered_columns)]
-    else:
+    if (filtering_density != 0):
         # Convert list of strings to a 2D numpy array (shape: n_samples x seq_length)
         arr = np.array([list(seq) for seq in sequences])
     
@@ -139,6 +126,19 @@ def vcf2xml(vcf, xml_template, output_xml, encoding="nd16", filtering_density=0.
 
         # Rebuild filtered sequences
         sequences = [''.join(row[keep_mask]) for row in arr]
+        
+
+    # Transpose sequences to iterate by columns
+        columns = zip(*sequences)
+
+        # Filter columns
+        filtered_columns = [
+            col for col in columns
+            if len(set(col) - {"-"}) > 1  # more than one non-gap character
+        ]
+
+        # Rebuild sequences (transpose back)
+        sequences = ["".join(chars) for chars in zip(*filtered_columns)]
     
     
     seq_length=len(sequences[0])

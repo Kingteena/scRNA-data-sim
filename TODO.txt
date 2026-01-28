@@ -1,3 +1,13 @@
 Fix the logging 
 Create a .config
 Create pipelines
+
+
+
+assign_cell_to_states
+can be uniform model and dont need direlect
+every state is present at least one in the cells 
+
+-resume
+
+first paper cell line and primary tumors
