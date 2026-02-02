@@ -36,4 +36,4 @@ done
             AVERAGE_SNVs=0
             fi
 
-echo "Summary Table of the Filtered simulated Cancer Cell Lineages has been generated in the cellcoal folder of outputs"
+echo "Summary Table of the Simulated Tumor Cancer Cell Lineages has been generated in Ouputs Folder"

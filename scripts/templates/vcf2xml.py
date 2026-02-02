@@ -97,9 +97,10 @@ def parse_args():
 def vcf2xml(vcf, xml_template, output_xml, encoding="nd16", filtering_density=0.0):
     # Parse the VCF file
     names, sequences = parse_vcf(vcf, encoding)
-    # Exclude the last sequence
-    names = names[:-1]
-    sequences = sequences[:-1]
+    # Exclude the last sequence --> because its the outgroup
+
+    # names = names[:-1]
+    # sequences = sequences[:-1]
 
     # Read the XML template
     with open(xml_template, "r") as template_file:
@@ -129,16 +130,16 @@ def vcf2xml(vcf, xml_template, output_xml, encoding="nd16", filtering_density=0.
         
 
     # Transpose sequences to iterate by columns
-        columns = zip(*sequences)
+    columns = zip(*sequences)
 
-        # Filter columns
-        filtered_columns = [
-            col for col in columns
-            if len(set(col) - {"-"}) > 1  # more than one non-gap character
-        ]
+    # Filter columns
+    filtered_columns = [
+        col for col in columns
+        if len(set(col) - {"-"}) > 1  # more than one non-gap character
+    ]
 
-        # Rebuild sequences (transpose back)
-        sequences = ["".join(chars) for chars in zip(*filtered_columns)]
+    # Rebuild sequences (transpose back)
+    sequences = ["".join(chars) for chars in zip(*filtered_columns)]
     
     
     seq_length=len(sequences[0])

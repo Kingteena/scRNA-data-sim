@@ -5,11 +5,12 @@
 #SBATCH -n 1
 #SBATCH --time=00:30:00
 #SBATCH --mem=72GB
-
 #SBATCH --output="logs/%x-%j.out"
 #SBATCH --error="logs/%x-%j.err"
 
 module load BCFtools/1.17-GCC-11.2.0
+module load HTSlib/1.18-GCC-12.3.0
+module load R/4.4.1-gfbf-2023a
 
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <parameter_file> <output_folder>"
@@ -49,6 +50,12 @@ mkdir -p $FILTERED
 # ##*. remove everything after the pattern 
   for f in $OUTPUT/vcf_dir/vcf.*; do
     mv "$f" "$OUTPUT/vcf_dir/${f##*.}.vcf"
+  done 
+
+  # renaming the file to have .tree suffix 
+# ##*. remove everything after the pattern and renaming .tree as there is only one tree in each file 
+  for f in $OUTPUT/tree_dir/trees.*; do
+    mv "$f" "$OUTPUT/vcf_dir/${f##*.}.tree"
   done 
 
 echo "Now filtering the files"

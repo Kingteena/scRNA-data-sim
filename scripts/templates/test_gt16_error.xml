@@ -104,7 +104,7 @@
         </populationModel>
     </tree>
 
-    <run spec="MCMC" id="mcmc" chainLength="1000000" preBurnin="50000">
+    <run spec="MCMC" id="mcmc" chainLength="5000000" preBurnin="100000">
 
         <init idref='coalescentSimulator'/>
 
@@ -145,18 +145,18 @@
         </operator>
 
         <!-- GT16 substitution model frequencies operator -->
-        <operator id="frequenciesExchanger" spec="DeltaExchangeOperator" weight="1" delta="0.01">
+        <operator id="frequenciesExchanger" spec="DeltaExchangeOperator" weight="1" delta="0.025">
             <parameter idref="freqParameter"/>
         </operator>
-
+ 
         <operator id='treeScaler' spec='ScaleOperator' scaleFactor="0.5" weight="1" tree="@tree"/>
-        <operator id='subtreeSlide' spec='SubtreeSlide' weight="5" gaussian="true" size="1.0" tree="@tree"/>
-        <operator id='uniform' spec='Uniform' weight="10" tree="@tree"/>
-        <operator id='narrow' spec='Exchange' isNarrow='true' weight="1" tree="@tree"/>
-        <operator id='wide' spec='Exchange' isNarrow='false' weight="1" tree="@tree"/>
-        <operator id='wilsonBalding' spec='WilsonBalding' weight="1" tree="@tree"/>
+        <operator id='subtreeSlide' spec='SubtreeSlide' weight="5" gaussian="true" size="0.005" tree="@tree"/>
+        <operator id='uniform' spec='Uniform' weight="2" tree="@tree"/>
+        <operator id='narrow' spec='Exchange' isNarrow='true' weight="3" tree="@tree"/>
+        <operator id='wide' spec='Exchange' isNarrow='false' weight="3" tree="@tree"/>
+        <operator id='wilsonBalding' spec='WilsonBalding' weight="20" tree="@tree"/>
 
-        <logger logEvery="10000" fileName="test_GT16_error.$(seed).log">
+        <logger logEvery="5000" fileName="$(seed).log">
             <model idref='likelihood'/>
             <log idref="likelihood"/>
             <log idref='rates'/>
@@ -164,10 +164,10 @@
             <log idref='error.epsilon'/>
             <log spec='beast.base.evolution.tree.TreeHeightLogger' tree='@tree'/>
         </logger>
-        <logger logEvery="10000" fileName="test_GT16_error.$(seed).trees">
+        <logger logEvery="5000" fileName="$(seed).trees">
             <log idref="tree"/>
         </logger>
-        <logger logEvery="10000">
+        <logger logEvery="5000">
             <model idref='likelihood'/>
             <log idref="likelihood"/>
             <ESS spec='ESS' name='log' arg="@likelihood"/>
@@ -178,6 +178,7 @@
             <log idref='error.epsilon'/>
             <ESS spec='ESS' name='log' arg="@error.epsilon"/>
         </logger>
+        
     </run>
 
 </beast>

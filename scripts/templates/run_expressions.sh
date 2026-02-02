@@ -14,7 +14,6 @@ if [ "$#" -lt 3 ]; then
 fi
 
 
-
 TREE_INPUT_PATH="$1"
 VCF_INPUT_PATH="$2"
 VCF_OUTPUT_PATH="$3"
@@ -28,12 +27,15 @@ NUM_STATES=5                            # Number of cell states
 NUM_CELLS=10                            # Number of cells for expression profiles
 NUM_GENES=30000                        # Number of genes for expression profiles
 ALPHA_GES=0.5                           # Dirichlet concentration parameter 
-MINLIB=40000                            # Minimum library size
-MAXLIB=60000                            # Maximum library size
+MINLIB=1000                            # Minimum library size
+MAXLIB=5000                           # Maximum library size
 
 # Create expression profiles
 echo "Generating expression profiles and updating vcf file..."
 python3 -c "
+import sys
+sys.path.insert(0, '.')  
+from expression import *
 cnames = get_cellnames(path='${TREE_INPUT_PATH}')
 cell_assignments = assign_cells_to_states(cnames, nstates=${NUM_STATES})
 ges = simulate_state_ges(nstates=${NUM_STATES}, ngenes=${NUM_GENES}, alpha_ges=${ALPHA_GES})

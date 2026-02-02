@@ -33,3 +33,5 @@ Meanwhile, CellPhy is less memory hungry (often <1GB) but more time consuming. H
 These scripts are designed to call the template scripts with specific parameters. They often loop over a set of conditions or configurations to automate the simulation process across multiple scenarios. These scripts are typically executed with `./<caller name>.`
 
 **NOTE:**: These scripts are desined to run on an HPC cluster by calling template scripts via `sbatch`. To run them on a local machine, you may need to modify the calls to the template scripts to execute them directly (i.e., `./<template_script>` instead of `sbatch <template_script>`).
+
+
