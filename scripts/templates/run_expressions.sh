@@ -54,10 +54,10 @@ if [ "$#" -ne 4 ]; then
     exit 0
 fi
 
-WORKING_DIR=$(pwd)
+WORKING_DIR=$(dirname "$0")
 XML_OUTPUT_PATH="$4"
 XML_TEMPLATE_PATH="/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/scripts/templates/test_gt16_error.xml"
 
-python3 $WORKING_DIR/vcf2xml.py $VCF_OUTPUT_PATH $XML_TEMPLATE_PATH $XML_OUTPUT_PATH
+python3 $WORKING_DIR/vcf2xml.py $VCF_OUTPUT_PATH $XML_TEMPLATE_PATH $XML_OUTPUT_PATH --filtering_density 0.3
 
 echo "VCF updates with expressions successfully!"

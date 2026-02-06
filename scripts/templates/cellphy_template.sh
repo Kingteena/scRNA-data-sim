@@ -4,7 +4,7 @@
 #SBATCH -c 24
 #SBATCH -n 1
 #SBATCH --time=01:30:00
-#SBATCH --mem=2GB
+#SBATCH --mem=3GB
 #SBATCH -o logs/EstOutput.log
 
 # No notifications given the fact that we don't want to spam users 
@@ -16,4 +16,9 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
-/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/cellphy-0.9.4/cellphy.sh -t 24 -o $2/CellPhy_Output $1
+INPUT=$1
+OUTPUT=$2
+
+/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/cellphy-0.9.4/cellphy.sh -t 24 -o $OUTPUT $INPUT
+
+echo "Finished with cellphy run for $INPUT" 

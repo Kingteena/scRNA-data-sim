@@ -1,17 +1,12 @@
-Fix the logging 
-Create a .config
-Create pipelines
+6/2
 
+- Create a .config
+- Create pipelines
 
+- first paper cell line and primary tumors
+- Install script for expression.py as a python module
 
-assign_cell_to_states
-can be uniform model and dont need direlect
-every state is present at least one in the cells 
+- The runs have been created and cleaned of outgroup, more info on Readme, will update as well
+- Need to run BEAST, figuring out xml and TreeAnnotator shenangians 
+- Almost done with analysis :)! 
 
--resume
-
-first paper cell line and primary tumors
-Install script for expression.py as a python module
-
-
-missing data: 

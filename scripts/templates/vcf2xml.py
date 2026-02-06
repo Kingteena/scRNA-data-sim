@@ -6,6 +6,7 @@ import pysam
 import xml.etree.ElementTree as ET
 import re
 import numpy as np
+import sys
 
 datatype = {
     "binary": "binary",

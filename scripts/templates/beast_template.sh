@@ -2,14 +2,14 @@
 #SBATCH -p batch              # Standard CPU partition
 #SBATCH -N 1                  # 1 Node
 #SBATCH -n 1                  # 1 Task
-#SBATCH -c 1               # 4
-#SBATCH --mem=4G              # 4GB Total RAM (2GB for Java + 2GB buffer for BEAGLE/OS)
-#SBATCH --time=00:40:00       # Adjust this based on your chain length test
+#SBATCH -c 1                  # 1
+#SBATCH --mem=400M
+#SBATCH --time=02:40:00       # Adjust this based on your chain length test
 #SBATCH -J beast        # Job name
-#SBATCH -o instances.log          # Standard output log
+#SBATCH -o /hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/beast/log        # Standard output log
 
 
-if [$# -ne 1]; then
+if [ $# -ne 1 ]; then
   echo "Usage: $0 <XML FILE>"
   exit 1
 fi

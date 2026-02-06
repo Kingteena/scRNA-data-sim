@@ -148,18 +148,27 @@ def write_vcf(vcf_df, output_vcf):
             f.write('\t'.join(row) + '\n')
 
 
-#if __name__ == "__main__":
-#    args = parse_args()
-#    vcf2xml(args.vcf, args.xml_template, args.output_xml, args.encoding)
+if __name__ == "__main__":
+    GENOME_LENGTH=500000   
+    NUM_STATES=5           
+    NUM_CELLS=10           
+    NUM_GENES=30000        
+    ALPHA_GES=0.5          
+    MINLIB=1000            
+    MAXLIB=5000            
+    TREE_INPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.tree'
+    VCF_INPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.vcf'
+    VCF_OUTPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.expressed.vcf'
 
-###  Parameters  ###
-# genome_length = length of the dna Sequence
-# ngenes = number of genes
-# nstates = number of states 
-# alpha_states = np.ones(nstates) # Symmetric dirichlet; can be adjusted
-# alpha_ges = 0.5                 # Dirichlet concentration parameter
-# maxlib = 60000
-# minlib = 40000
+
+
+    cnames = get_cellnames(path=TREE_INPUT_PATH)
+    cell_assignments = assign_cells_to_states(cnames, nstates=NUM_STATES)
+    ges = simulate_state_ges(nstates=NUM_STATES, ngenes=NUM_GENES, alpha_ges=ALPHA_GES)
+    counts_df = simulate_cell_counts(cell_assignments, ges, minlib=MINLIB, maxlib=MAXLIB)
+    vcf_df = parse_vcf(vcf_file=VCF_INPUT_PATH)
+    vcf_df = update_vcf_with_expression(vcf_df, counts_df, genome_length=GENOME_LENGTH)
+    write_vcf(vcf_df, output_vcf=VCF_OUTPUT_PATH)
 
 
 ### file paths ###

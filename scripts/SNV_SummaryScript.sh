@@ -6,7 +6,7 @@
 SUMMARY_FILE=/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/cellcoal/Simulated_SNV_summary.txt
 TOTAL_SNVs=0
 FILE_COUNT=0
-REPLICATES=30
+REPLICATES=100
 
 touch $SUMMARY_FILE
 echo -e "Summary Table of the SNVs generated within the Simulated Replicates\n" >> $SUMMARY_FILE
