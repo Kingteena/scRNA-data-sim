@@ -1,23 +1,24 @@
-#pip install Biopython
+"""
+Expression Filter for VCF Files.
 
-import os
-import re
+This module integrates gene expression simulation with VCF genotype filtering.
+It simulates gene expression counts based on cell states and masks variants
+in the VCF that fall within genes with zero expression.
+"""
+
 import numpy as np
 import pandas as pd
-from Bio import Phylo
+import os
 
-def get_cellnames(path):
+def get_cellnames(vcf_df: pd.DataFrame) -> list[str]:
     """
-    Reads Newick tree from Cellcoal tree.000X file and gets the name of the cells
+    Reads headers of df and gets the name of the cells
     """
-    tree = Phylo.read(path, "newick")
-    leaves = tree.get_terminals()
-    names = [leaf.name for leaf in leaves[:-1]]
-    return names
+    return vcf_df.columns[9:].tolist()
 
 def assign_cells_to_states(cnames, nstates):
     """
-    Assigns cells to one of k states using a Dirichlet distribution.
+    Assigns cells to one of k states using a Uniform distribution.
 
     Parameters:
     - cnames (list): contains cell names for a tree.
@@ -26,19 +27,14 @@ def assign_cells_to_states(cnames, nstates):
     Returns:
     - cell_states: A list containing the State of each cell.
     """
-    alpha_states = np.ones(nstates) # Symmetric dirichlet; can be adjusted
-
-    # Make sure there is at least 2 distinct cell assignments
+    # Ensure at least 2 distinct states are chosen (matching original logic)
     while True:
-        # Generate Dirichlet distribution for probabilities across states
-        state_probabilities = np.random.dirichlet(alpha_states, size=len(cnames))
-            
-        # Assign each cell to a state based on the highest probability
-        cell_assignments = np.argmax(state_probabilities, axis=1)
-
+        # Uniform distiribution: Just pick a random integer for each cell
+        cell_assignments = np.random.randint(0, nstates, size=len(cnames))
+        
         if len(set(cell_assignments)) >= 2:
-            break
-    
+            break # Typically this will always succeed on the first try, but we keep the safety check just in case.
+            
     return cell_assignments
 
 def simulate_state_ges(nstates, ngenes, alpha_ges):
@@ -56,7 +52,7 @@ def simulate_state_ges(nstates, ngenes, alpha_ges):
     ges = np.random.dirichlet([alpha_ges] * ngenes, nstates)
     return ges
 
-def simulate_cell_counts(cell_assignments, ges, minlib, maxlib):
+def simulate_cell_counts(cell_assignments, ges, cnames, minlib, maxlib):
     """
     Simulate counts for cells based on their assigned state.
     
@@ -71,65 +67,82 @@ def simulate_cell_counts(cell_assignments, ges, minlib, maxlib):
     """
     ncells = len(cell_assignments)
     ngenes = ges.shape[1]
-    library_sizes = np.random.uniform(minlib, maxlib, ncells)  # Random library sizes
-    expression_matrix = np.zeros((ncells, ngenes), dtype=int)
     
-    for i, state in enumerate(cell_assignments):
-        state = ges[state]                      # Get GES for the cell's state
-        scaling_factor = library_sizes[i]
-        gene_means = state * scaling_factor
-        expression_matrix[i, :] = np.random.poisson(gene_means)
+    # 1. Generate Library Sizes (Vectorized)
+    library_sizes = np.random.uniform(minlib, maxlib, ncells)
+    
+    # 2. Expand GES to (ncells, ngenes) using fancy indexing
+    # Instead of looking up 'ges' inside a loop, we map it instantly
+    # shape: (ncells, ngenes)
+    cell_gene_means = ges[cell_assignments]
+    
+    # 3. Apply Scaling Factor
+    # Reshape library_sizes to (ncells, 1) to broadcast across genes
+    means = cell_gene_means * library_sizes[:, None]
+    
+    # 4. Generate Poisson Counts for the WHOLE matrix at once
+    # This is the massive speedup
+    expression_matrix = np.random.poisson(means)
 
-    #create data_frame
-    genes = [f"Gene{i+1}" for i in range(ngenes)]                        # Gene names
-    cells = [f"tumcell{str(i+1).zfill(4)}" for i in range(ncells)]  # Cell names
-    expression_matrix = pd.DataFrame(expression_matrix, index=cells, columns=genes)
+    # Create DataFrame (Optimized label generation)
+    # If ngenes is constant, you should ideally cache this list outside the function!
+    genes = [f"Gene{i+1}" for i in range(ngenes)]
     
-    return expression_matrix
+    return pd.DataFrame(expression_matrix, index=cnames, columns=genes)
 
 def parse_vcf(vcf_file):
-    """Parse the VCF file into a DataFrame."""
+    """
+    Parses VCF using pure Python list comprehension.
+    Faster than Pandas read_csv for files < 50MB.
+    """
     with open(vcf_file, 'r') as f:
-        lines = [line.strip() for line in f if not line.startswith('##')]
-    header = lines[0].split('\t')
-    data = [line.split('\t') for line in lines[1:]]
-    vcf_df = pd.DataFrame(data, columns=header)
-    #del vcf_df[vcf_df.columns[-1]]  delete last column if needed
-    return vcf_df
+        # Single pass: Filter comments, strip, and split all at once
+        data = [line.strip().split('\t') for line in f if not line.startswith('##')]
+    
+    # The first row is the header (#CHROM...), the rest is data
+    # We construct the DataFrame directly from the list of lists
+    df = pd.DataFrame(data[1:], columns=data[0])
+    df['POS'] = df['POS'].astype(int)  # Ensure POS is integer for later processing
+
+    # Delete the 'healthycell' column if it exists, as it's not needed for the analysis
+    if 'healthycell' in df.columns:
+        df.drop(columns=['healthycell'], inplace=True)
+    return df
+
 
 def update_vcf_with_expression(vcf_df, counts_df, genome_length):
     """
-    Update the VCF file based on expression data.
-
-    Parameters:
-    - vcf_df: DataFrame containing the VCF data.
-    - counts_df: DataFrame containing gene expression data (rows: cells, columns: genes).
-    - genome_length: Total length of the genome, used to map positions to genes.
-
-    Returns:
-    - Updated VCF DataFrame.
+    Optimized update using Boolean Masking.
+    Includes safety check for POS column type.
     """
-    ngenes = counts_df.shape[1]            # Number of genes
-    gene_length = genome_length // ngenes  # Length of each gene
-
-    for idx, row in vcf_df.iterrows():
-        # Determine which gene this SNV belongs to based on its position
-        position = int(row['POS'])
-        gene_index = position // gene_length
-        
-        if gene_index >= ngenes:
-            continue  # Skip if position is out of range
-
-        # Get the gene name from counts_df columns
-        gene = counts_df.columns[gene_index]
-
-        for cell in counts_df.index:            # Iterate over cells
-            if counts_df.loc[cell, gene] == 0:  # Check if expression is zero
-                # Update the genotype for this cell in the VCF
-                genotype = row[cell]
-                updated_genotype = re.sub(r'\b[01]\|[01]:', '.|.:', genotype)
-                vcf_df.at[idx, cell] = updated_genotype
+    ngenes = counts_df.shape[1]
+    gene_length = genome_length // ngenes
     
+    # --- FIX IS HERE ---
+    # Force POS to be integers. If it's already int, this does nothing (fast).
+    # If it's string, it fixes it instantly.
+    # vcf_df['POS'] = vcf_df['POS'].astype(int)
+    # -------------------
+    
+    # 1. Pre-calculate which gene every variant belongs to
+    variant_gene_indices = vcf_df['POS'].values // gene_length
+    
+    # 2. Loop ONLY over cells (columns)
+    valid_cells = [c for c in counts_df.index if c in vcf_df.columns]
+    
+    for cell in valid_cells:
+        zero_gene_indices = np.where(counts_df.loc[cell].values == 0)[0]
+        
+        if len(zero_gene_indices) == 0:
+            continue
+            
+        mask = np.isin(variant_gene_indices, zero_gene_indices)
+        
+        if np.any(mask):
+            vcf_df.loc[mask, cell] = vcf_df.loc[mask, cell].str.replace(
+                r'^[01]\|[01]:', '.|.:', regex=True
+            )
+
     return vcf_df
 
 
@@ -140,39 +153,42 @@ def write_vcf(vcf_df, output_vcf):
     - vcf_df: DataFrame containing the updated VCF data.
     - output_vcf: Path to save the updated VCF file.
     """
+    vcf_df['POS'] = vcf_df['POS'].astype(str)  # Ensure POS is string for output
+
     with open(output_vcf, 'w') as f:
         f.write("##fileformat=VCFv4.3\n")
         f.write("##source=Updated with zero-expression filtering\n")
         f.write('\t'.join(vcf_df.columns) + '\n')
-        for _, row in vcf_df.iterrows():
+
+        for row in vcf_df.itertuples(index=False, name=None):
             f.write('\t'.join(row) + '\n')
 
 
-if __name__ == "__main__":
-    GENOME_LENGTH=500000   
-    NUM_STATES=5           
-    NUM_CELLS=10           
-    NUM_GENES=30000        
-    ALPHA_GES=0.5          
-    MINLIB=1000            
-    MAXLIB=5000            
-    TREE_INPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.tree'
-    VCF_INPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.vcf'
-    VCF_OUTPUT_PATH = '/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/profiling/0002.expressed.vcf'
+def process_single_file(vcf_input_path, output_path, config):
+    """
+    The worker task that handles ONE file completely.
+    """
+    try:
+        # 1. Input vcf and parse it
+        vcf_df = parse_vcf(vcf_input_path)
 
 
+        # 2. Run Expression Logic (The Optimized Way)
+        cnames = get_cellnames(vcf_df=vcf_df)
+        
+        # Recalculate simulation params per file (or pass them if constant)
+        cell_assignments = assign_cells_to_states(cnames, nstates=config['NUM_STATES'])
+        ges = simulate_state_ges(config['NUM_STATES'], config['NUM_GENES'], config['ALPHA_GES'])
+        counts_df = simulate_cell_counts(cell_assignments, ges, cnames, config['MINLIB'], config['MAXLIB'])
+        
+        # Update VCF
+        vcf_df = update_vcf_with_expression(vcf_df, counts_df, genome_length=config['GENOME_LENGTH'])
+        
+        # Write updated VCF
+        write_vcf(vcf_df, output_vcf=output_path)
 
-    cnames = get_cellnames(path=TREE_INPUT_PATH)
-    cell_assignments = assign_cells_to_states(cnames, nstates=NUM_STATES)
-    ges = simulate_state_ges(nstates=NUM_STATES, ngenes=NUM_GENES, alpha_ges=ALPHA_GES)
-    counts_df = simulate_cell_counts(cell_assignments, ges, minlib=MINLIB, maxlib=MAXLIB)
-    vcf_df = parse_vcf(vcf_file=VCF_INPUT_PATH)
-    vcf_df = update_vcf_with_expression(vcf_df, counts_df, genome_length=GENOME_LENGTH)
-    write_vcf(vcf_df, output_vcf=VCF_OUTPUT_PATH)
-
-
-### file paths ###
-# vcf_file = "results/vcf_dir/vcf.0001"
-# updated_vcf_file = "results/vcf_dir/scRNAvcf.0001"
-
+        return f"SUCCESS: {os.path.basename(vcf_input_path)}"
+                
+    except Exception as e:
+        return f"Error {os.path.basename(vcf_input_path)}: {str(e)}"
 
