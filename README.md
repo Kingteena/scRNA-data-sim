@@ -1,4 +1,4 @@
-Cancer Cell Lineage Simulation Project
+# Cancer Cell Lineage Simulation Project
 ---
 This project aims to investigate the extent to which sequencing noise impacts the accuracy of the reconstructed phylogeny using Maximum Likelihood (CellPhy) and Bayesian Models (BEAST2)
 
@@ -27,4 +27,4 @@ The simulation pipeline is organized into the following steps:
 3. **Phylogenetic Inference**: Use CellPhy and BEAST2 with the phylonco package to infer phylogenetic trees from the simulated data.
 4. **Analysis and Visualization**: Analyze the inferred trees and visualize the results 
 
-
+For more details on the scripts used in each step, see the [Wiki](https://github.com/Kingteena/scRNA-data-sim/wiki)

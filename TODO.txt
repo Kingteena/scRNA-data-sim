@@ -10,3 +10,6 @@
 - Need to run BEAST, figuring out xml and TreeAnnotator shenangians 
 - Almost done with analysis :)! 
 
+- wiki updating with bio background and theory/reasoning behind the parameter choices 
+
+

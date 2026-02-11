@@ -13,7 +13,7 @@ echo -e "Summary Table of the SNVs generated within the Simulated Replicates\n" 
 echo -e "VCF_File\t|\tSNV_Count" >> $SUMMARY_FILE
 echo "----------------------------------------" >> $SUMMARY_FILE
 
-for folder in /hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/cellcoal/; do
+for folder in "/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/cellcoal/run_*"; do
     echo "Processing folder: $(basename $folder)" 
     for file in $folder/cleaned_reps/* ; do
         SNV=$(grep -v "^#" "$file" | wc -l)
@@ -36,4 +36,4 @@ done
             AVERAGE_SNVs=0
             fi
 
-echo "Summary Table of the Simulated Tumor Cancer Cell Lineages has been generated in Ouputs Folder"
+echo "Summary Table of the Simulated Tumor Cancer Cell Lineages has been generated in Outputs Folder"

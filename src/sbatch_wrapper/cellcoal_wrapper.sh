@@ -18,7 +18,7 @@ PROJROOT=/hpcfs/groups/phoenix-hpc-gavryushkina/simulation
 CELLCOAL=${PROJROOT}/tools/cellcoal-1.1.1
 PARAMETERS=$1
 OUTPUT=$2
-Folder_name=output4
+Folder_name=output
 
 #Running Cellcoal and Simulating the Cancer Cell Lineages 
 echo "Now running Cellcoal and Simulating Cancer cell lineages"

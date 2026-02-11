@@ -2,10 +2,10 @@
 #SBATCH -p batch
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH -c 14
-#SBATCH --mem=300
-#SBATCH --time=02:00:00
-#SBATCH --job-name=cellphy_array
+#SBATCH -c 9
+#SBATCH --mem=1100M
+#SBATCH --time=04:00:00
+#SBATCH --job-name=cellphy_run_8
 #SBATCH --output=/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/cellphy/log/%a.log
 #SBATCH --array=1-100             # 100 VCF files per run × 8 runs
 
@@ -19,7 +19,8 @@ CELLPHY_BIN="${BASE_DIR}/tools/cellphy-0.9.4/cellphy.sh"
 # --- ARRAY MATH ---
 # With 100 VCF files per run and 8 runs = 800 total tasks
 # Calculate run number and VCF number directly from array task ID
-RUN_NUMBER=$((SLURM_ARRAY_TASK_ID / 100 ))
+RUN_NUMBER=8
+#$((SLURM_ARRAY_TASK_ID / 100 + 1))
 VCF_NAME=$(printf "%04d" $SLURM_ARRAY_TASK_ID)
 
 # Construct the VCF file path
@@ -39,7 +40,10 @@ echo "Task $SLURM_ARRAY_TASK_ID: Processing run_${RUN_NUMBER} - ${VCF_NAME}"
 echo "Input: $VCF_FILE"
 echo "Output: $TARGET_OUTPUT_DIR"
 
+# Cellphy outputs to current directory, so we change to the target output directory before running
+cd "$TARGET_OUTPUT_DIR"
+
 # --- RUN CELLPHY ---
-"$CELLPHY_BIN" -t 14 -o "$TARGET_OUTPUT_DIR" "$VCF_FILE"
+"$CELLPHY_BIN" -t 9 -o "$TARGET_OUTPUT_DIR" "$VCF_FILE"
 
 echo "Finished with CellPhy run for run_${RUN_NUMBER}/${VCF_NAME}"

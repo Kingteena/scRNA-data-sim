@@ -3,11 +3,14 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -c 1
-#SBATCH --mem=350
+#SBATCH --mem=1G
 #SBATCH --time=03:00:00
 #SBATCH --job-name=beast_array
 #SBATCH --output=/hpcfs/groups/phoenix-hpc-gavryushkina/simulation/output/beast/logs/%a.log
-#SBATCH --array=0-799              # Adjust based on total number of VCF files
+#SBATCH --array=73,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,300,301,302,303,304,305,306,307,317,318,329,330,331,332,333,334,344,345,346,347,348,355,356,357,358,359,360,361,369,370,371,372,375,376,377,378,382,383,384,385,386,387,388,389,399 
+              # Adjust based on total number of VCF files
+
+
 
 # --- CONFIGURATION ---
 # Define your directories explicitly
