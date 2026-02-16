@@ -1,6 +1,6 @@
 ## Final Step of Simulation Workflow
 ## R script summarises the accuracy of phylogentic tree inferences from CellPhy and BEAST through key comparison  metrics
-## Boxplot (.pdf) and Table (.csv) Stats Summary (.txt) are generated for each replicates set of three trees inputted from script caller
+## Boxplot (.pdf), Table (.csv) and Stats Summary (.txt) are generated for each respective runs completed
 
 
 # trailingOnly = TRUE: ignores all the background "system" info and only focuses on specific arguments you typed in Bash in the caller 
@@ -15,7 +15,7 @@ Cellphy_trees_path <- args[3]
 output_path        <- args[4]
 run_number         <- args[5]
  
-# Load Libraries
+# Loading in Libraries
 suppressPackageStartupMessages({
   library(ape)
   library(TreeDist)
@@ -31,17 +31,17 @@ suppressPackageStartupMessages({
 
 # process_tree : Function to process the inputted trees; matching tip labels and normalising tree height 
 process_tree <- function(tree) {
-  # Strip everything except digits to match 'tumcell_0001' and 'cell0001'
+  # Striping everything except digits to match 'tumcell_0001' and 'cell0001'
   new_labels <- gsub("[^0-9]", "", tree$tip.label)
 
-  # Remove invisible whitespace/carriage returns
+  # Removing invisible whitespace
   new_labels <- trimws(new_labels)
 
-  # Rename the outgroup (empty strings) to "OUTGROUP"
+  # Renaming the outgroup (empty strings) to "OUTGROUP"
   new_labels[new_labels == ""] <- "OUTGROUP"
   tree$tip.label <- new_labels
 
- # Normalise branch lengths to total height of 1.0
+ # Normalising branch lengths to total height of 1.0
   max_height <- max(ape::node.depth.edgelength(tree), na.rm = TRUE)
   if(max_height > 0) tree$edge.length <- tree$edge.length / max_height  
 
@@ -49,13 +49,14 @@ process_tree <- function(tree) {
 }
 
 # Metrics Calculation Function
-# 5 key metrics (RF,JRF,QD,CID,Path_Disr) for assessing accuracy of the phylogentic inference
+# 5 key metrics (RF,JRF,QD,CID,Path_Dist) for assessing accuracy of the phylogentic inference
 
 calculate_metrics <- function(clean_true, clean_inferred, method_name) {
 
   # Syncing tip labels to avoid "length mismatch" errors 
   # Saving into a "current_"tree, to avoid corrupting the original tree files
   # 'intersect' automatically ignores the 21st Outgroup cell because it exists in CellCoal but NOT in the BEAST CCD0  or Cellphy trees
+
   common <- intersect(clean_true$tip.label, clean_inferred$tip.label)
   current_true <- ape::keep.tip(clean_true, common)
   current_inferred <- ape::keep.tip(clean_inferred, common)
@@ -97,7 +98,7 @@ calculate_metrics <- function(clean_true, clean_inferred, method_name) {
 message("Loading Tree files for BEAST and CellPhy comparison...")
 
 # Enlisitng "gtools::mixedsort" to ensure tree files match (e.g 0001 matches 0001), when comparing Beast and Cellcoal trees
-# for true_trees, trees\\ = matching with the text 'trees', [0-9]+ = matches one or more digits, $ = the file has to end there, preventing log files
+# for true_trees, trees\\ = matching with the text 'trees', [0-9]+ = matches one or more digits, $ = the file has to end there, preventing log files from being read
 
 truetree_files    <- gtools::mixedsort(list.files(True_trees_path, pattern = "trees\\.[0-9]+$", full.names = TRUE))
 beasttree_files   <- gtools::mixedsort(list.files(Beast_trees_path, pattern = ".*\\.tree$", full.names = TRUE))
@@ -116,7 +117,7 @@ for (i in seq_along(truetree_files)) {
 
   #Reading in Ground Truth Tree (CellCoal)
   # With some low mutation rate (e.g run_1), some basepairs don't acquire enough mutations to define a tree. 
-  # If CellCoal doesn't find any mutations, it instead produces an "empty" tree or a tree that ape cannot parse, thus if statement is added to check for this 
+  # If CellCoal doesn't find any mutations, it instead produces an "empty" tree, thus an if statement is added to check for this 
  
     true_tree <- tryCatch({
     tree <- ape::read.tree(truetree_files[i])
@@ -129,7 +130,7 @@ for (i in seq_along(truetree_files)) {
     next
   }
 
-  # Reading in Inference Tree (BEAST)
+  # Reading in BEAST Inference Tree 
   # Within in the loop; reading in trees, processing, calculating metrics and adding row to results_list
   # TryCatch: is a safety net which tries Nexus read in first, then Newick incase of error
   # Added safety measure in case of "empty" trees from Cellcoal 
@@ -282,7 +283,7 @@ metric_boxplot <- ggplot(metrics_long, aes(x = Metric, y = Distance, fill = Meth
   scale_fill_brewer(palette = "Set2") +
   labs(title = "Comparing Phylogenetic Accuracy of BEAST (CCD0) and CellPhy (ML) in 
     Reconstructing CellCoal-Simulated Cancer Evolution Trees\n",
-       subtitle = "Data pooled from 100 Replicates ",
+       subtitle = paste0("Data pooled from 100 Replicates for  ", run_number),
        y = "Normalized Distance\n", # value of 0 = identical topologies 
        x = "\nAccuracy Metric Type") +
       theme(legend.position = "top")
