@@ -1,6 +1,6 @@
 # Cancer Cell Lineage Simulation Project
 ---
-This project aims to investigate the extent to which sequencing noise impacts the accuracy of the reconstructed phylogeny using Maximum Likelihood (CellPhy) and Bayesian Models (BEAST2)
+This project aims to investigate the extent to which sequencing noise impacts the accuracy of reconstructing scRNA‑seq cancer cell phylogenies using Maximum Likelihood (CellPhy) and Bayesian Models (BEAST2)
 
 To Get started, clone the GitHub Repo and follow the steps in [Usage & Installation](https://github.com/Kingteena/scRNA-data-sim/wiki/Installation-%26-Setup)
 
